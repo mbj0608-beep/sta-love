@@ -27,7 +27,6 @@ const App: React.FC = () => {
   // 启动游戏逻辑
   const startGame = () => {
     setGameStarted(true);
-    // 延迟播放音效确保环境已激活
     setTimeout(() => {
       if (audioRef.current) {
         audioRef.current.play().catch(() => console.log("Audio autoplay blocked"));
@@ -129,6 +128,13 @@ const App: React.FC = () => {
         break;
     }
 
+    // 检查是否有新成就
+    const nextEvent = SPECIAL_EVENTS.find(e => e.threshold === state.interactionCount + 1);
+    if (nextEvent && !state.unlockedEvents.includes(nextEvent.title)) {
+      setShowEvent({ title: nextEvent.title, text: nextEvent.text });
+      setState(prev => ({ ...prev, unlockedEvents: [...prev.unlockedEvents, nextEvent.title] }));
+    }
+
     setState(prev => ({
       ...prev,
       currentMessage: newMsg,
@@ -144,17 +150,20 @@ const App: React.FC = () => {
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  // 游戏未开始显示的封面
   if (!gameStarted) {
     return (
-      <div className="relative w-full h-screen bg-black flex flex-col items-center justify-center font-['ZCOOL_KuaiLe'] p-10 text-center">
-        <div className="pixel-border bg-white/10 p-8 space-y-6">
-          <div className="text-pink-500 text-6xl animate-pulse">❤️</div>
-          <h1 className="text-white text-4xl font-black tracking-widest">陆沉的午后</h1>
-          <p className="text-white/60 text-sm">—— 像素间的温度，只为你存在 ——</p>
+      <div className="relative w-full h-screen bg-[#121212] flex flex-col items-center justify-center font-['ZCOOL_KuaiLe'] p-10 text-center overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-pink-900/20 to-black pointer-events-none"></div>
+        <div className="pixel-border bg-white/5 backdrop-blur-md p-10 space-y-8 z-10 border-white/20">
+          <div className="text-pink-500 text-7xl animate-pulse drop-shadow-[0_0_15px_rgba(236,72,153,0.5)]">❤️</div>
+          <div className="space-y-2">
+            <h1 className="text-white text-5xl font-black tracking-[0.2em]">星月的午后</h1>
+            <p className="text-pink-200/50 text-xs tracking-widest">A PIXEL ROMANCE STORY</p>
+          </div>
+          <p className="text-white/60 text-sm italic">“即使在像素的世界里，我也想紧紧握住你的手。”</p>
           <button 
             onClick={startGame}
-            className="pixel-button bg-pink-500 text-white px-10 py-4 text-xl mt-8"
+            className="pixel-button bg-pink-500 hover:bg-pink-400 text-white px-12 py-5 text-2xl mt-4 shadow-[0_4px_0_0_#9d174d]"
           >
             开启心动
           </button>
@@ -164,9 +173,9 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-[#1a1a2e] font-['ZCOOL_KuaiLe'] select-none">
+    <div className="relative w-full h-screen overflow-hidden bg-black font-['ZCOOL_KuaiLe'] select-none">
       
-      {/* 角色全屏展示 */}
+      {/* 角色全屏展示：撑满屏幕 */}
       <div 
         className="absolute inset-0 z-0 transition-all duration-1000"
         style={{ filter: ambientFilter }}
@@ -178,105 +187,131 @@ const App: React.FC = () => {
           loop 
           muted 
           playsInline
-          className="w-full h-full object-cover pixelated"
+          className="w-full h-full object-cover pixelated opacity-90"
         />
-        {/* 透明点击层：点击人物任意位置触发“触碰” */}
         <div 
-          className="absolute inset-0 z-10" 
+          className="absolute inset-0 z-10 bg-gradient-to-t from-black/60 via-transparent to-black/30" 
           onClick={() => handleInteraction('touch')}
         ></div>
       </div>
 
-      {/* 顶部 UI */}
-      <div className="absolute top-0 left-0 right-0 p-6 z-30 flex justify-between items-start pointer-events-none">
-        <div className="flex flex-col space-y-1">
-          <div className="text-white text-4xl font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+      {/* 顶部 UI：状态与时间 */}
+      <div className="absolute top-0 left-0 right-0 p-6 pt-10 z-30 flex justify-between items-start pointer-events-none">
+        <div className="flex flex-col space-y-2">
+          <div className="text-white text-5xl font-black drop-shadow-[0_4px_8px_rgba(0,0,0,1)] tracking-tighter">
             {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </div>
-          <div className="pixel-border bg-black/30 backdrop-blur-sm px-3 py-1 inline-flex items-center space-x-2 border-white/20">
-            <span className="text-[10px] text-white/70 uppercase">Affection</span>
-            <span className="text-sm text-pink-400 font-bold">{state.affection}</span>
+          <div className="pixel-border bg-black/40 backdrop-blur-md px-3 py-1.5 inline-flex items-center space-x-2 border-white/10">
+            <div className="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></div>
+            <span className="text-[10px] text-white/50 uppercase font-bold tracking-widest">Trust</span>
+            <span className="text-base text-pink-400 font-black">{state.affection}</span>
           </div>
         </div>
         
-        <div className="flex flex-col items-end space-y-3 pointer-events-auto">
+        <div className="flex flex-col items-end space-y-4 pointer-events-auto">
           <button 
             onClick={toggleAudio}
-            className="w-10 h-10 pixel-border bg-black/40 backdrop-blur-md flex items-center justify-center text-xl text-white border-white/20"
+            className="w-12 h-12 pixel-border bg-black/50 backdrop-blur-lg flex items-center justify-center text-2xl text-white border-white/20 shadow-xl"
           >
             {state.isAudioPlaying ? '🎵' : '🔇'}
           </button>
           
           {state.isFocusMode && (
-            <div className="pixel-border bg-pink-500 text-white px-3 py-1 text-lg font-bold animate-pulse">
+            <div className="pixel-border bg-pink-600 text-white px-4 py-2 text-xl font-black shadow-lg animate-pulse border-white/40">
               {formatTime(state.focusTimeLeft)}
             </div>
           )}
         </div>
       </div>
 
-      {/* 底部 UI */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 pb-8 z-30 flex flex-col space-y-4">
+      {/* 底部 UI：对话与交互 */}
+      <div className="absolute bottom-0 left-0 right-0 p-5 pb-10 z-30 flex flex-col space-y-5">
         
-        {/* 心情气泡 */}
+        {/* 浮动心情提示 */}
         {state.mood !== Mood.CALM && (
-          <div className="self-end mr-6 mb-[-10px] pixel-border bg-white px-3 py-1 text-lg animate-bounce shadow-2xl">
-            {state.mood === Mood.SHY && '💕'}
+          <div className="self-end mr-4 mb-[-15px] pixel-border bg-white px-4 py-2 text-2xl animate-bounce shadow-[4px_4px_0_0_rgba(0,0,0,0.3)] border-black">
+            {state.mood === Mood.SHY && '💖'}
             {state.mood === Mood.HAPPY && '✨'}
             {state.mood === Mood.TEASING && '😏'}
             {state.mood === Mood.FOCUS && '⏳'}
           </div>
         )}
 
-        {/* 沉浸式对话框 */}
-        <div className="pixel-border bg-black/60 backdrop-blur-xl p-5 min-h-[120px] border-white/10">
-          <div className="text-white/40 text-[10px] uppercase tracking-widest mb-1">Lu Chen</div>
-          <div className="text-white text-lg leading-relaxed font-medium drop-shadow-md">
+        {/* 沉浸式对话框：半透明磨砂 */}
+        <div className="pixel-border bg-black/50 backdrop-blur-2xl p-6 min-h-[130px] border-white/10 shadow-2xl group transition-all duration-300 active:bg-black/70">
+          <div className="flex justify-between items-center mb-2">
+            <div className="text-pink-400 text-[12px] font-black uppercase tracking-[0.3em]">Xing Yue / 星月</div>
+            <div className="flex space-x-1">
+              <div className="w-1 h-1 bg-white/20"></div>
+              <div className="w-1 h-1 bg-white/40"></div>
+              <div className="w-1 h-1 bg-white/60"></div>
+            </div>
+          </div>
+          <div className="text-white text-xl leading-relaxed font-bold tracking-wide drop-shadow-md">
             {state.currentMessage}
           </div>
+          <div className="absolute bottom-3 right-5 text-white/20 text-xs animate-pulse font-sans">TAP TO TOUCH</div>
         </div>
 
-        {/* 交互面板 */}
+        {/* 交互按钮栏 */}
         {!state.isFocusMode ? (
-          <div className="grid grid-cols-4 gap-2 h-14">
-            <button onClick={() => handleInteraction('chat')} className="pixel-button bg-white/5 text-white border-white/20 text-xs">💬 聊天</button>
-            <button onClick={() => handleInteraction('gift')} className="pixel-button bg-white/5 text-white border-white/20 text-xs">🎁 投喂</button>
+          <div className="grid grid-cols-4 gap-3 h-16">
+            <button onClick={() => handleInteraction('chat')} className="pixel-button bg-white/10 text-white border-white/20 text-sm hover:bg-white/20">💬 聊天</button>
+            <button onClick={() => handleInteraction('gift')} className="pixel-button bg-white/10 text-white border-white/20 text-sm hover:bg-white/20">🎁 投喂</button>
             <button 
-              onClick={() => setState(prev => ({ ...prev, isFocusMode: true, focusTimeLeft: 1500, mood: Mood.FOCUS, currentMessage: "我会一直看着你的，专心开始吧。" }))} 
-              className="pixel-button bg-pink-600/60 text-white border-white/20 text-xs col-span-2 flex flex-col items-center justify-center"
+              onClick={() => setState(prev => ({ ...prev, isFocusMode: true, focusTimeLeft: 1500, mood: Mood.FOCUS, currentMessage: "我会一直陪着你的，放心开始吧。" }))} 
+              className="pixel-button bg-gradient-to-r from-pink-600/60 to-purple-600/60 text-white border-white/30 text-sm col-span-2 flex flex-col items-center justify-center group"
             >
-              <span>🧘 专注陪伴</span>
-              <span className="text-[8px] opacity-70">25 MINS</span>
+              <span className="font-black">🧘 专注陪伴</span>
+              <span className="text-[9px] opacity-70 font-sans tracking-widest">25:00 POMODORO</span>
             </button>
           </div>
         ) : (
           <button 
-            onClick={() => setState(prev => ({ ...prev, isFocusMode: false, focusTimeLeft: 0, currentMessage: "休息一下吧。" }))} 
-            className="pixel-button bg-red-500/60 text-white border-white/20 h-14"
+            onClick={() => setState(prev => ({ ...prev, isFocusMode: false, focusTimeLeft: 0, currentMessage: "辛苦了，稍微休息一下吧。" }))} 
+            className="pixel-button bg-red-500/50 text-white border-white/30 h-16 text-lg font-black tracking-widest backdrop-blur-md"
           >
-            结束专注
+            结束专注陪伴
           </button>
         )}
       </div>
 
       <audio ref={audioRef} src="./music.mp3" loop />
 
-      {/* 剧情弹窗 */}
+      {/* 剧情与成就弹窗 */}
       {showEvent && (
-        <div className="absolute inset-0 bg-black/95 z-50 flex items-center justify-center p-10 backdrop-blur-md">
-          <div className="pixel-border bg-white p-8 max-w-xs w-full text-center space-y-6">
-            <div className="text-4xl">🏆</div>
-            <h2 className="text-[#ff4d6d] text-2xl font-black tracking-tighter">【{showEvent.title}】</h2>
-            <p className="text-gray-800 text-base leading-relaxed">{showEvent.text}</p>
+        <div className="absolute inset-0 bg-black/90 z-50 flex items-center justify-center p-8 backdrop-blur-2xl transition-all animate-in fade-in zoom-in duration-500">
+          <div className="pixel-border bg-white p-10 max-w-sm w-full text-center space-y-8 shadow-[0_0_50px_rgba(255,255,255,0.1)]">
+            <div className="text-6xl animate-bounce">🎁</div>
+            <div className="space-y-2">
+              <h2 className="text-pink-600 text-3xl font-black tracking-tighter">【{showEvent.title}】</h2>
+              <div className="h-0.5 w-12 bg-pink-100 mx-auto"></div>
+            </div>
+            <p className="text-gray-800 text-lg leading-relaxed font-bold px-4">{showEvent.text}</p>
             <button 
               onClick={() => setShowEvent(null)}
-              className="pixel-button w-full py-4 bg-[#ff4d6d] text-white font-bold"
+              className="pixel-button w-full py-5 bg-pink-600 text-white font-black text-xl shadow-[0_4px_0_0_#9d174d] active:shadow-none translate-y-0 active:translate-y-1"
             >
               铭记此刻
             </button>
           </div>
         </div>
       )}
+
+      {/* 氛围装饰颗粒 */}
+      <div className="absolute inset-0 pointer-events-none opacity-30 z-20">
+        {[...Array(15)].map((_, i) => (
+          <div 
+            key={i}
+            className="absolute bg-white/80 w-1 h-1 rounded-full"
+            style={{
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              animation: `pulse ${2 + Math.random() * 3}s infinite alternate`
+            }}
+          />
+        ))}
+      </div>
     </div>
   );
 };

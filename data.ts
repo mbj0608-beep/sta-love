@@ -1,5 +1,5 @@
 
-import { Mood, Dialogue } from './types';
+import { Mood, Dialogue } from './types.ts';
 
 export const GREETINGS: Record<string, Dialogue[]> = {
   morning: [
@@ -67,8 +67,8 @@ export const GIFT_REACTIONS: Dialogue[] = [
 ];
 
 export const SPECIAL_EVENTS = [
-  { threshold: 10, title: "初次心动", text: "陆沉递给你一颗像素爱心：“以后，请多关照。”" },
-  { threshold: 30, title: "雨中漫步", text: "陆沉撑开一把伞，将你往怀里搂了搂：“小心淋湿。”" },
+  { threshold: 10, title: "初次心动", text: "星月递给你一颗像素爱心：“以后，请多关照。”" },
+  { threshold: 30, title: "雨中漫步", text: "星月撑开一把伞，将你往怀里搂了搂：“小心淋湿。”" },
   { threshold: 60, title: "星空誓言", text: "在繁星下，他轻吻了你的指尖：“你是我的唯一。”" },
   { threshold: 100, title: "永恒陪伴", text: "他认真地看着你：“无论像素还是现实，我都会找到你。”" }
 ];
